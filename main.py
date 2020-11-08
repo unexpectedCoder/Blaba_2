@@ -13,11 +13,11 @@ def main():
     showBody(body, "Тело (снаряд)")
 
     # Начало pygame
-    wall = bb.build_body(w=300, h=900, n=150, key='w')
-    body = bb.build_body(w=500, h=25, n=25, key='h')
+    wall = bb.build_body(w=300, h=600, n=150, key='w')
+    body = bb.build_body(w=500, h=25, n=15, key='h')
     # Отрисовка начального состояния
-    Visualizer(wall, body, np.array([150, 450]), np.array([0, 450]), (5000, 900),
-               px_size=(1200, 900)).showStatic()
+    Visualizer(wall, body, np.array([505, 0]), np.array([0, 0]), (5000, 600),
+               px_size=(1200, 600), offset=200).showStatic()
 
     return 0
 
