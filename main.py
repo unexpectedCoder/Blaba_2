@@ -22,8 +22,8 @@ def make_some_data_for_report():
     # Контрольный вывод
     print(wall, striker, sep='\n')
     # Разбивка тел на частицы
-    wall.break_into_particles(n=25, dim='w')
-    striker.break_into_particles(n=20, dim='h')
+    wall.break_into_particles(n=25, dim='w', kind='wall')
+    striker.break_into_particles(n=21, dim='h', kind='striker')
     # Вывод количества частиц в консоль
     print_n_particles(wall)
     print_n_particles(striker)
@@ -46,12 +46,12 @@ def modeling():
 
 def init_bodies() -> Tuple[Body, Body]:
     """Инициализация тел и разбиение их на частицы."""
-    wall = Body(mass=.5, size=(.5, 3), name='wall', color=(128, 128, 128), pos=np.array([.55, 0]))
-    wall.break_into_particles(n=175, dim='w')
+    wall = Body(mass=.5, size=(.3, 3), name='wall', color=(128, 128, 128), pos=np.array([.55, 0]))
+    wall.break_into_particles(n=101, dim='w', kind='wall')
     print_n_particles(wall)
 
     striker = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]))
-    striker.break_into_particles(n=25, dim='h')
+    striker.break_into_particles(n=26, dim='h', kind='striker', rotate=45)
     print_n_particles(striker)
 
     return wall, striker

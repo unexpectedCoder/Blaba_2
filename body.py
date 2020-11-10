@@ -118,13 +118,16 @@ class Body:
         else:
             self._parts = None
 
-    def break_into_particles(self, n: int, dim: str, center: bool = True):
+    def break_into_particles(self, n: int, dim: str,
+                             center: bool = True, kind: str = 'wall', rotate: float = 0):
         """Разбить тело на частицы.
 
         :param n: количество частиц по измерению ``dim``.
         :param dim: направление (измерение) по которому тело разбивается на ``n`` частиц -- ``w`` или ``'h'``.
                     Количество частиц в другом направлении зависит от ``n`` и получается автоматически.
-        :param center: фла -- центрировать ли частицы относительно оси симметрии (середины высоты тела).
+        :param center: флаг -- центрировать ли частицы относительно оси симметрии (середины высоты тела).
+        :param kind: тип тела -- 'wall' или 'striker' (имеет заострённый носик).
+        :param rotate: угол поворота относительно цетра правой стороны, град.
         """
         if dim != 'w' and dim != 'h':
             raise ValueError
@@ -134,16 +137,32 @@ class Body:
         nw, nh = int(self.width / dw), int(self.height / dh)                # кол-во частиц по ширине и высоте
 
         parts = []
+        y1 = lambda x: np.tan(np.deg2rad(15)) * (x - self.width) + .5 * self.height
+        y2 = lambda x: -np.tan(np.deg2rad(15)) * (x - self.width) + .5 * self.height
         for i in range(nh):         # вверх по стенке
             for j in range(nw):     # поперёк стенки
                 h = i * dh
                 w = j * dw if i % 2 == 0 else j * dw + r
-                parts.append([w, h])
-        self.particles = np.array(parts, dtype=np.float64)
-        self.particles += self.pos
-
+                if kind == 'striker':
+                    if y1(w) < h < y2(w):
+                        parts.append([w, h])
+                else:
+                    parts.append([w, h])
+        parts = np.array(parts, dtype=np.float64)
+        parts += self.pos
         if center:
-            self.particles[:, 1] -= .5 * self.height
+            parts[:, 1] -= .5 * self.height
+
+        a = np.deg2rad(rotate)  # угол вращения в рад
+        # Вращение
+        if rotate != 0:
+            parts[:, 0] -= self.width
+            rotated = [np.matmul([[np.cos(a), np.sin(a)],
+                                  [-np.sin(a), np.cos(a)]], p.T) for p in parts]
+            self.particles = np.array(rotated, dtype=np.float64)
+            self.particles[:, 0] += self.width
+        else:
+            self.particles = np.array(parts)
 
     def get_draw_particles(self, scale: np.ndarray, win_size: Tuple[int, int]) -> np.ndarray:
         """Преобразование физических координат в экранные координаты."""
