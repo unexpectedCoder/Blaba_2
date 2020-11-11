@@ -4,6 +4,7 @@ import numpy as np
 from visualizer import Visualizer
 from body import Body
 from space import Space
+from solver import Solver
 
 
 def main():
@@ -44,6 +45,9 @@ def modeling():
     space = init_space()
     wall, striker = init_bodies()
     Visualizer(wall, striker, space, win_size=(900, 900)).show_static()  # отрисовка начального состояния
+
+    # Основная часть моделирования
+    solver = Solver(wall, striker, space, sigma=.01, epsilon=1)
 
 
 def init_bodies() -> Tuple[Body, Body]:

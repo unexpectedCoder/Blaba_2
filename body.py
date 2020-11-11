@@ -34,7 +34,7 @@ class Body:
         self.pos = pos
         self.rotate = np.deg2rad(rotate_deg)
 
-        self._mi = None     # масса одной частицы
+        self._dm = None     # масса одной частицы
 
     def __repr__(self):
         return f"{self.__class__.__name__}:" \
@@ -43,11 +43,13 @@ class Body:
                f" (w; h)={self.size}" \
                f" color={self.color}" \
                f" pos={self.pos}" \
-               f" rotate={np.rad2deg(self.rotate)}"
+               f" rotate={np.rad2deg(self.rotate)}" \
+               f" dm = {self.dm}"
 
     def copy(self) -> 'Body':
         """:return: Копия экземпляра типа ``Body``."""
-        b = Body(self.mass, self.size, self.name, self.color, self.pos)
+        b = Body(self.mass, self.size, self.name, self.color, self.pos,
+                 rotate_deg=np.rad2deg(self.rotate))
         if self.particles is not None:
             b.particles = self.particles
         return b
@@ -139,9 +141,9 @@ class Body:
         self._rotate = rot
 
     @property
-    def mi(self) -> float:
-        """Масса i-ой частицы."""
-        return self._mi
+    def dm(self) -> float:
+        """Масса частицы."""
+        return self._dm
 
     def break_into_particles(self, n: int, dim: str, kind: str, center: bool = True):
         """Разбить тело на частицы.
@@ -187,7 +189,7 @@ class Body:
         else:
             self.particles = np.array(parts)
 
-        self._mi = self.mass / self.particles.size
+        self._dm = self.mass / self._parts.size  # масса одной частицы
 
     def get_draw_particles(self, scale: np.ndarray, win_size: Tuple[int, int]) -> np.ndarray:
         """Преобразование физических координат в экранные координаты."""
