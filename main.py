@@ -1,6 +1,5 @@
 from typing import Tuple
 import numpy as np
-import os
 
 from visualizer import Visualizer
 from body import Body
@@ -20,7 +19,7 @@ def make_some_data_for_report():
 
     # Два тела - стенка и ударник
     wall = Body(mass=5, size=(10, 30), name='wall', color=(128, 128, 128), pos=np.array([20, 0]))
-    striker = Body(mass=.5, size=(10, 3), name='striker', color=(0, 0, 0), pos=np.array([0, 0]))
+    striker = Body(mass=1, size=(10, 3), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=30)
     # Контрольный вывод
     print(wall, striker, sep='\n')
     # Разбивка тел на частицы
@@ -44,17 +43,17 @@ def modeling():
 
     space = init_space()
     wall, striker = init_bodies()
-    Visualizer(wall, striker, space).show_static()  # отрисовка начального состояния
+    Visualizer(wall, striker, space, win_size=(900, 900)).show_static()  # отрисовка начального состояния
 
 
 def init_bodies() -> Tuple[Body, Body]:
     """Инициализация тел и разбиение их на частицы."""
-    wall = Body(mass=.5, size=(.3, 3), name='wall', color=(128, 128, 128), pos=np.array([.55, 0]))
+    wall = Body(mass=.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.51, 0]))
     wall.break_into_particles(n=101, dim='w', kind='wall')
     print_n_particles(wall)
 
-    striker = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]))
-    striker.break_into_particles(n=26, dim='h', kind='striker', rotate=0)
+    striker = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=30)
+    striker.break_into_particles(n=26, dim='h', kind='striker')
     print_n_particles(striker)
 
     return wall, striker
@@ -62,7 +61,7 @@ def init_bodies() -> Tuple[Body, Body]:
 
 def init_space() -> Space:
     """Инициализация физического пространства."""
-    return Space((3, 3))
+    return Space((2.5, 2.5))
 
 
 if __name__ == '__main__':

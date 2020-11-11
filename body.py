@@ -14,7 +14,8 @@ class Body:
        * *size* -- кортеж размера вида (ширина; высота) в м;
        * *name* -- название тела;
        * *color* -- цвет тела для отрисовки;
-       * *pos* -- позиция левого верхнего угла описанного прямоугольника, м.
+       * *pos* -- позиция левого верхнего угла описанного прямоугольника, м;
+       * *rotate* -- угол поворота, рад.
     """
 
     def __init__(self,
@@ -22,7 +23,8 @@ class Body:
                  size: Tuple[float, float],
                  name: str,
                  color: Tuple[int, int, int],
-                 pos: np.ndarray):
+                 pos: np.ndarray,
+                 rotate_deg: float = 0.):
         self.particles = None
 
         self.mass = mass
@@ -30,10 +32,18 @@ class Body:
         self.name = name
         self.color = color
         self.pos = pos
+        self.rotate = np.deg2rad(rotate_deg)
+
+        self._mi = None     # масса одной частицы
 
     def __repr__(self):
-        return f"{self.__class__.__name__}: " \
-               f"name='{self.name}' mass={self.mass} (w; h)={self.size} color={self.color} pos={self.pos}"
+        return f"{self.__class__.__name__}:" \
+               f" name='{self.name}'" \
+               f" mass={self.mass}" \
+               f" (w; h)={self.size}" \
+               f" color={self.color}" \
+               f" pos={self.pos}" \
+               f" rotate={np.rad2deg(self.rotate)}"
 
     def copy(self) -> 'Body':
         """:return: Копия экземпляра типа ``Body``."""
@@ -119,8 +129,21 @@ class Body:
         else:
             self._parts = None
 
-    def break_into_particles(self, n: int, dim: str,
-                             center: bool = True, kind: str = 'wall', rotate: float = 0):
+    @property
+    def rotate(self) -> float:
+        """Угол поворота."""
+        return self._rotate
+
+    @rotate.setter
+    def rotate(self, rot: float):
+        self._rotate = rot
+
+    @property
+    def mi(self) -> float:
+        """Масса i-ой частицы."""
+        return self._mi
+
+    def break_into_particles(self, n: int, dim: str, kind: str, center: bool = True):
         """Разбить тело на частицы.
 
         :param n: количество частиц по измерению ``dim``.
@@ -128,7 +151,6 @@ class Body:
                     Количество частиц в другом направлении зависит от ``n`` и получается автоматически.
         :param center: флаг -- центрировать ли частицы относительно оси симметрии (середины высоты тела).
         :param kind: тип тела -- 'wall' или 'striker' (имеет заострённый носик).
-        :param rotate: угол поворота относительно цетра правой стороны, град.
         """
         if dim != 'w' and dim != 'h':
             raise ValueError
@@ -154,9 +176,9 @@ class Body:
         if center:
             parts[:, 1] -= .5 * self.height
 
-        a = np.deg2rad(rotate)  # угол вращения в рад
+        a = self.rotate
         # Вращение
-        if rotate != 0:
+        if self.rotate != 0:
             parts[:, 0] -= self.width
             rotated = [np.matmul([[np.cos(a), np.sin(a)],
                                   [-np.sin(a), np.cos(a)]], p.T) for p in parts]
@@ -164,6 +186,8 @@ class Body:
             self.particles[:, 0] += self.width
         else:
             self.particles = np.array(parts)
+
+        self._mi = self.mass / self.particles.size
 
     def get_draw_particles(self, scale: np.ndarray, win_size: Tuple[int, int]) -> np.ndarray:
         """Преобразование физических координат в экранные координаты."""
