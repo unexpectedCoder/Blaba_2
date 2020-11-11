@@ -1,5 +1,6 @@
 from typing import Tuple
 import numpy as np
+import os
 
 from visualizer import Visualizer
 from body import Body
@@ -29,8 +30,8 @@ def make_some_data_for_report():
     print_n_particles(wall)
     print_n_particles(striker)
     # Показ тел
-    wall.show_particles()
-    striker.show_particles()
+    wall.save_image()
+    striker.save_image()
 
 
 def print_n_particles(b: Body):

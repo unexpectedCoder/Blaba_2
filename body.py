@@ -1,6 +1,7 @@
 from typing import Tuple, Union
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 class Body:
@@ -170,14 +171,17 @@ class Body:
         draw_parts[:, 1] += (win_size[1] // 2) / scale[1]   # центрирование на экране по оси Ox
         return draw_parts * scale
 
-    def show_particles(self):
+    def save_image(self):
         plt.figure("Body", figsize=(6, 6))
         x, y = self.particles[:, 0], self.particles[:, 1]
         plt.scatter(x, y, color='k', marker='.')
         plt.title(self.name)
         plt.xlabel("ширина, м")
         plt.ylabel("высота, м")
-        plt.show()
+
+        if not os.path.isdir('pics'):
+            os.mkdir('pics')
+        plt.savefig(f"pics/{self.name}.png")
 
 
 if __name__ == '__main__':
