@@ -3,6 +3,7 @@ import numpy as np
 
 from visualizer import Visualizer
 from body import Body
+from space import Space
 
 
 def main():
@@ -40,8 +41,9 @@ def modeling():
     """Основная функция программы. Запускает алгоритм моделирования."""
     print("\nМоделирование...")
 
+    space = init_space()
     wall, striker = init_bodies()
-    Visualizer(wall, striker, space_size=(5, 3)).show_static()  # отрисовка начального состояния
+    Visualizer(wall, striker, space).show_static()  # отрисовка начального состояния
 
 
 def init_bodies() -> Tuple[Body, Body]:
@@ -51,10 +53,15 @@ def init_bodies() -> Tuple[Body, Body]:
     print_n_particles(wall)
 
     striker = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]))
-    striker.break_into_particles(n=26, dim='h', kind='striker', rotate=45)
+    striker.break_into_particles(n=26, dim='h', kind='striker', rotate=0)
     print_n_particles(striker)
 
     return wall, striker
+
+
+def init_space() -> Space:
+    """Инициализация физического пространства."""
+    return Space((3, 3))
 
 
 if __name__ == '__main__':
