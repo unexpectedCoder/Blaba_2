@@ -1,7 +1,9 @@
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+
+from particle import Particle
 
 
 class Body:
@@ -34,8 +36,6 @@ class Body:
         self.pos = pos
         self.rotate = np.deg2rad(rotate_deg)
 
-        self._dm = None     # масса одной частицы
-
     def __repr__(self):
         return f"{self.__class__.__name__}:" \
                f" name='{self.name}'" \
@@ -43,8 +43,7 @@ class Body:
                f" (w; h)={self.size}" \
                f" color={self.color}" \
                f" pos={self.pos}" \
-               f" rotate={np.rad2deg(self.rotate)}" \
-               f" dm = {self.dm}"
+               f" rotate={np.rad2deg(self.rotate)}"
 
     def copy(self) -> 'Body':
         """:return: Копия экземпляра типа ``Body``."""
@@ -57,11 +56,11 @@ class Body:
     @property
     def mass(self) -> float:
         """Масса тела, кг."""
-        return self._mass
+        return self._m
 
     @mass.setter
     def mass(self, m: float):
-        self._mass = m
+        self._m = m
 
     @property
     def width(self) -> float:
@@ -120,12 +119,12 @@ class Body:
             self.particles += self._pos
 
     @property
-    def particles(self) -> np.ndarray:
+    def particles(self) -> List[Particle]:
         """Массив координат частиц."""
         return self._parts
 
     @particles.setter
-    def particles(self, parts: Union[np.ndarray, None]):
+    def particles(self, parts: Union[List[Particle], None]):
         if parts is not None:
             self._parts = parts.copy()
         else:
@@ -134,16 +133,11 @@ class Body:
     @property
     def rotate(self) -> float:
         """Угол поворота."""
-        return self._rotate
+        return self._rot
 
     @rotate.setter
     def rotate(self, rot: float):
-        self._rotate = rot
-
-    @property
-    def dm(self) -> float:
-        """Масса частицы."""
-        return self._dm
+        self._rot = rot
 
     def break_into_particles(self, n: int, dim: str, kind: str, center: bool = True):
         """Разбить тело на частицы.
@@ -161,7 +155,7 @@ class Body:
         dw, dh = 2 * r, r * np.sqrt(3.)                                     # шаг координат по ширине и высоте
         nw, nh = int(self.width / dw), int(self.height / dh)                # кол-во частиц по ширине и высоте
 
-        parts = []
+        positions = []
         y1 = lambda x: np.tan(np.deg2rad(15)) * (x - self.width) + .5 * self.height
         y2 = lambda x: -np.tan(np.deg2rad(15)) * (x - self.width) + .5 * self.height
         for i in range(nh):         # вверх по стенке
@@ -170,36 +164,39 @@ class Body:
                 w = j * dw if i % 2 == 0 else j * dw + r
                 if kind == 'striker':
                     if y1(w) < h < y2(w):
-                        parts.append([w, h])
+                        positions.append([w, h])
                 else:
-                    parts.append([w, h])
-        parts = np.array(parts, dtype=np.float64)
-        parts += self.pos
+                    positions.append([w, h])
+        positions = np.array(positions, dtype=np.float64)
+        positions += self.pos
         if center:
-            parts[:, 1] -= .5 * self.height
+            positions[:, 1] -= .5 * self.height
 
-        a = self.rotate
+        dm = self.mass / positions.size     # масса одной частицы
+
         # Вращение
-        if self.rotate != 0:
-            parts[:, 0] -= self.width
-            rotated = [np.matmul([[np.cos(a), np.sin(a)],
-                                  [-np.sin(a), np.cos(a)]], p.T) for p in parts]
-            self.particles = np.array(rotated, dtype=np.float64)
-            self.particles[:, 0] += self.width
+        a = self.rotate
+        if a != 0:
+            positions[:, 0] -= self.width
+            rotated_pos = np.array([np.matmul([[np.cos(a), np.sin(a)],
+                                               [-np.sin(a), np.cos(a)]], p.T) for p in positions])
+            rotated_pos[:, 0] += self.width
+            self.particles = [Particle(velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
+                              for pos in rotated_pos]
         else:
-            self.particles = np.array(parts)
-
-        self._dm = self.mass / self._parts.size  # масса одной частицы
+            self.particles = [Particle(velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
+                              for pos in positions]
 
     def get_draw_particles(self, scale: np.ndarray, win_size: Tuple[int, int]) -> np.ndarray:
         """Преобразование физических координат в экранные координаты."""
-        draw_parts = self.particles.copy()
-        draw_parts[:, 1] += (win_size[1] // 2) / scale[1]   # центрирование на экране по оси Ox
+        draw_parts = np.array([p.pos.copy() for p in self.particles], order='F')
+        draw_parts[:, 1] += (win_size[1] // 2) / scale[1]   # центрирование на экране относительно оси Ox
         return draw_parts * scale
 
     def save_image(self):
         plt.figure("Body", figsize=(6, 6))
-        x, y = self.particles[:, 0], self.particles[:, 1]
+        parts = np.array([p.pos.copy() for p in self.particles], order='F')
+        x, y = parts[:, 0], parts[:, 1]
         plt.scatter(x, y, color='k', marker='.')
         plt.title(self.name)
         plt.xlabel("ширина, м")

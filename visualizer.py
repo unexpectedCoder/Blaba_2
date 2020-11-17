@@ -15,8 +15,8 @@ WHITE = 255, 255, 255
 class Visualizer:
     def __init__(self, wall: Body, striker: Body, space: Space,
                  win_size: Tuple[int, int] = (1200, 600)):
-        self._wall = wall.copy()
-        self._striker = striker.copy()
+        self._wall = wall
+        self._striker = striker
         self._win_size = win_size
         self._scale = np.array([win_size[0] / space.size[0], win_size[1] / space.size[1]])
 

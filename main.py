@@ -35,7 +35,7 @@ def make_some_data_for_report():
 
 
 def print_n_particles(b: Body):
-    print(f"Количество частиц в '{b.name}': {b.particles.size}")
+    print(f"Количество частиц в '{b.name}': {len(b.particles)}")
 
 
 def modeling():
@@ -65,7 +65,7 @@ def init_bodies() -> Tuple[Body, Body]:
 
 def init_space() -> Space:
     """Инициализация физического пространства."""
-    return Space((2.5, 2.5))
+    return Space((3, 3))
 
 
 if __name__ == '__main__':

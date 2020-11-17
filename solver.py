@@ -1,7 +1,5 @@
 from body import Body
 from space import Space
-from cell import Cell
-from mesh import Mesh
 
 
 class Solver:
@@ -9,11 +7,18 @@ class Solver:
 
     def __init__(self, wall: Body, striker: Body, space: Space,
                  sigma: float, epsilon: float):
+        self.check_bodies_particles(wall, striker)
+
         self._wall = wall
         self._striker = striker
         self._space = space
         self._sig = sigma
         self._eps = epsilon
+
+    @staticmethod
+    def check_bodies_particles(w: Body, s: Body):
+        if w.particles is None or s.particles is None:
+            raise ValueError("тела не разбиты на частицы!")
 
     @property
     def sigma(self) -> float:
@@ -22,7 +27,3 @@ class Solver:
     @property
     def epsilon(self) -> float:
         return self._eps
-
-    def build_mesh(self) -> Mesh:
-        """Построить сетку из ячеек, заполненных частицами."""
-        pass    # TODO
