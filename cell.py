@@ -18,10 +18,11 @@ class Cell:
         return f"{self.__class__.__name__}:" \
                f" size={self.size}" \
                f" ul(pos)={self.ul}" \
-               f" dr={self.dr}"
+               f" dr={self.dr}" \
+               f" n_particles={len(self.particles)}"
 
-    def __contains__(self, p: Particle):
-        return self.ul[0] <= p.pos[0] < self.dr[0] and self.dr[1] <= p.pos[1] < self.ul[1]
+    def __contains__(self, p: Particle) -> bool:
+        return self.ul[0] <= p.pos[0] < self.dr[0] and self.ul[1] <= p.pos[1] < self.dr[1]
 
     @property
     def size(self) -> np.ndarray:
@@ -61,9 +62,10 @@ class Cell:
 
     def as_draw_rect(self, scale: np.ndarray, win_size: Tuple[int, int]) -> Tuple[int, int, int, int]:
         """Преобразовать физические координаты в экранные."""
-        ul = self.ul.copy()
-        ul *= scale
         size = self.size * scale
+        ul = self.ul.copy()
+        ul[1] += (win_size[1] // 2) / scale[1]
+        ul *= scale
         return round(ul[0], 0), round(ul[1], 0), round(size[0], 0), round(size[1], 0)
 
 

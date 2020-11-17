@@ -55,7 +55,7 @@ def modeling():
 def init_bodies() -> Tuple[Body, Body]:
     """Инициализация тел и разбиение их на частицы."""
     wall = Body(mass=.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.51, 0]))
-    wall.break_into_particles(n=11, dim='w', kind='wall')
+    wall.break_into_particles(n=25, dim='w', kind='wall')
     print_n_particles(wall)
 
     striker = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=30)

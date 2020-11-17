@@ -1,8 +1,10 @@
+from tqdm import tqdm
+import numpy as np
+
 from body import Body
 from space import Space
 from cell import Cell
-
-import numpy as np
+from mesh import Mesh
 
 
 class Solver:
@@ -23,7 +25,7 @@ class Solver:
         self.k1 = -387072/61009 * self.epsilon / self.rs**3
         self.k2 = -24192/3211 * self.epsilon / self.rs**2
 
-        self.cells = None
+        self.mesh = None
 
     @staticmethod
     def check_bodies_particles(w: Body, s: Body):
@@ -49,7 +51,34 @@ class Solver:
 
     def build_mesh(self):
         """Построить сетку."""
+        print("Построение сетки...")
+
         side = self.rs
         size = side, side
         nc, nr = int(self.space.w / size[0]), int(self.space.h / size[1])
-        self.cells = [Cell(size=size, pos=(j*size[1], i*size[0])) for i in range(nr) for j in range(nc)]
+
+        print("Создание ячеек...")
+        cells = []
+        for i in range(nr):
+            cells.append([Cell(size=size, pos=(j*size[1], i*size[0] - .5*self.space.h)) for j in range(nc)])
+        parts = [p for p in self.wall.particles] + [p for p in self.striker.particles]
+
+        print("Заполнение ячеек частицами...\n")
+        for row in tqdm(cells):
+            for cell in row:
+                for i, p in enumerate(parts):
+                    if p in cell:
+                        cell.add_particle(parts.pop(i))
+
+        self.mesh = Mesh(cells)
+        print("Сетка создана!")
+
+    # TODO начать решать!!!
+    # Функция solve должна обходить все частицы, решая для них систему ОДУ и
+    # сохраняя результаты в файл numpy (*.npz, скорее всего)
+    def solve(self, dt: float):
+        """Основная функция, решающая систему ДУ для каждого момента времени.
+
+        :param dt: шаг по времени, с.
+        """
+        pass
