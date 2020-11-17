@@ -3,22 +3,20 @@ from pygame.locals import *
 import pygame
 import numpy as np
 
-from body import Body
-from space import Space
+from solver import Solver
 
 
-BLACK = 0, 0, 0
-GREY = 128, 128, 128
+L_BLUE = 220, 220, 255
 WHITE = 255, 255, 255
 
 
 class Visualizer:
-    def __init__(self, wall: Body, striker: Body, space: Space,
-                 win_size: Tuple[int, int] = (1200, 600)):
-        self._wall = wall
-        self._striker = striker
+    def __init__(self, solver: Solver, win_size: Tuple[int, int] = (1200, 600)):
+        self.wall = solver.wall.copy()
+        self.striker = solver.striker.copy()
+        self.cells = solver.cells.copy()
         self._win_size = win_size
-        self._scale = np.array([win_size[0] / space.size[0], win_size[1] / space.size[1]])
+        self._scale = np.array([win_size[0] / solver.space.size[0], win_size[1] / solver.space.size[1]])
 
         pygame.init()
         self.DISPLAYSURF = pygame.display.set_mode(win_size)
@@ -42,7 +40,10 @@ class Visualizer:
 
     def draw(self):
         self.DISPLAYSURF.fill(WHITE)
-        for p in self._wall.get_draw_particles(self._scale, self._win_size):
-            pygame.draw.circle(self.DISPLAYSURF, GREY, (p[0], p[1]), 1)
-        for p in self._striker.get_draw_particles(self._scale, self._win_size):
-            pygame.draw.circle(self.DISPLAYSURF, BLACK, (p[0], p[1]), 1)
+        for p in self.wall.get_draw_particles(self._scale, self._win_size):
+            pygame.draw.circle(self.DISPLAYSURF, self.wall.color, (p[0], p[1]), 1)
+        for p in self.striker.get_draw_particles(self._scale, self._win_size):
+            pygame.draw.circle(self.DISPLAYSURF, self.striker.color, (p[0], p[1]), 1)
+        for cell in self.cells:
+            rect = cell.as_draw_rect(self._scale, self._win_size)
+            pygame.draw.rect(self.DISPLAYSURF, L_BLUE, rect, width=1)

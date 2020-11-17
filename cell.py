@@ -1,5 +1,7 @@
-from typing import Iterable, Tuple, Union
+from typing import Iterable, List, Tuple
 import numpy as np
+
+from particle import Particle
 
 
 class Cell:
@@ -10,7 +12,16 @@ class Cell:
         self._ul = np.array(pos)            # верхняя левая вершина
         self._dr = self._ul + self._size    # нижняя правая вершина
 
-        self._parts = None                  # список частиц
+        self._parts = []                    # список частиц
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}:" \
+               f" size={self.size}" \
+               f" ul(pos)={self.ul}" \
+               f" dr={self.dr}"
+
+    def __contains__(self, p: Particle):
+        return self.ul[0] <= p.pos[0] < self.dr[0] and self.dr[1] <= p.pos[1] < self.ul[1]
 
     @property
     def size(self) -> np.ndarray:
@@ -18,23 +29,43 @@ class Cell:
 
     @property
     def ul(self) -> np.ndarray:
-        """Upper left вершина."""
+        """Upper-left вершина."""
         return self._ul
 
     @property
     def dr(self) -> np.ndarray:
-        """Down right вершина."""
+        """Down-right вершина."""
         return self._dr
 
     @property
-    def particles(self) -> Union[np.ndarray, None]:
+    def particles(self) -> List[Particle]:
         """Массив принадлежащих частиц."""
         return self._parts
 
-    def set_particles(self, parts: np.ndarray):
-        """Заполнить частицами."""
-        self._parts = parts.copy()
+    def add_particles(self, parts: List[Particle]):
+        """Добавить несколько частиц."""
+        self._parts += parts.copy()
 
-    def delete_particles(self, indexes: Iterable):
-        """Удаление частиц по заданным индексам."""
-        self._parts = np.delete(self._parts, np.s_(indexes))
+    def rm_particles(self, indexes: Iterable):
+        """Удалить несколько частиц по указанным индексам."""
+        for i in indexes:
+            self._parts.pop(i)
+
+    def add_particle(self, p: Particle):
+        """Добавить частицу."""
+        self._parts.append(p)
+
+    def rm_particle(self, p: Particle):
+        """Удалить заданную частицу."""
+        self._parts.remove(p)
+
+    def as_draw_rect(self, scale: np.ndarray, win_size: Tuple[int, int]) -> Tuple[int, int, int, int]:
+        """Преобразовать физические координаты в экранные."""
+        ul = self.ul.copy()
+        ul *= scale
+        size = self.size * scale
+        return round(ul[0], 0), round(ul[1], 0), round(size[0], 0), round(size[1], 0)
+
+
+if __name__ == '__main__':
+    print(Cell(size=(1, 1), pos=(2, 3)))

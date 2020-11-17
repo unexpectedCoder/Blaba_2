@@ -44,20 +44,22 @@ def modeling():
 
     space = init_space()
     wall, striker = init_bodies()
-    Visualizer(wall, striker, space, win_size=(900, 900)).show_static()  # отрисовка начального состояния
 
     # Основная часть моделирования
-    solver = Solver(wall, striker, space, sigma=.01, epsilon=1)
+    solver = Solver(wall, striker, space, sigma=.05, epsilon=1000)
+    solver.build_mesh()
+
+    Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка начального состояния
 
 
 def init_bodies() -> Tuple[Body, Body]:
     """Инициализация тел и разбиение их на частицы."""
     wall = Body(mass=.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.51, 0]))
-    wall.break_into_particles(n=101, dim='w', kind='wall')
+    wall.break_into_particles(n=11, dim='w', kind='wall')
     print_n_particles(wall)
 
     striker = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=30)
-    striker.break_into_particles(n=26, dim='h', kind='striker')
+    striker.break_into_particles(n=7, dim='h', kind='striker')
     print_n_particles(striker)
 
     return wall, striker
