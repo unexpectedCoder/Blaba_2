@@ -2,6 +2,7 @@ from typing import List, Tuple, Union
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import pickle
 
 from particle import Particle
 
@@ -199,6 +200,15 @@ class Body:
         if not os.path.isdir('pics'):
             os.mkdir('pics')
         plt.savefig(f"pics/{self.name}.png")
+
+    def save_particles(self):
+        """Сохранить частицы тела с помощью модуля *pickle*."""
+        if not os.path.isdir('data'):
+            os.mkdir('data')
+        path = f'data/start_{self.name}'
+        with open(path, 'wb') as f:
+            print(f"Частицы '{self.name}' сериализуются в файл '{path}'...")
+            pickle.dump(self.particles, f)
 
 
 if __name__ == '__main__':

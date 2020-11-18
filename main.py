@@ -1,5 +1,7 @@
 from typing import Tuple
 import numpy as np
+import os
+import pickle
 
 from visualizer import Visualizer
 from body import Body
@@ -34,40 +36,72 @@ def make_some_data_for_report():
     striker.save_image()
 
 
-def print_n_particles(b: Body):
-    print(f"Количество частиц в '{b.name}': {len(b.particles)}")
-
-
 def modeling():
     """Основная функция программы. Запускает алгоритм моделирования."""
     print("\nМоделирование...")
 
+    load = False
+    if os.path.isdir('data'):
+        if os.path.isfile('data/start_wall') and os.path.isfile('data/start_striker'):
+            load = input(" > Загружать начальные данные из файлов или сгенерировать заново? (y/n) ")
+            load = True if load == 'y' else False
+
+    wall = init_wall(load)
+    striker = init_striker(load)
     space = init_space()
-    wall, striker = init_bodies()
 
     # Основная часть моделирования
     solver = Solver(wall, striker, space, sigma=.05, epsilon=1000)
-    solver.build_mesh()
+    solver.create_mesh(load)
 
     Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка начального состояния
 
 
-def init_bodies() -> Tuple[Body, Body]:
-    """Инициализация тел и разбиение их на частицы."""
-    wall = Body(mass=.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.51, 0]))
-    wall.break_into_particles(n=25, dim='w', kind='wall')
-    print_n_particles(wall)
+def init_wall(load: bool) -> Body:
+    """Инициализировать объект *стенки*, разбив его на частицы.
 
-    striker = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=30)
-    striker.break_into_particles(n=7, dim='h', kind='striker')
-    print_n_particles(striker)
+    :return: Объект *стенки* типа ``Body``.
+    """
+    w = Body(mass=.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.51, 0]))
 
-    return wall, striker
+    if load:
+        path = 'data/start_wall'
+        with open(path, 'rb') as f:
+            w.particles = pickle.load(f)
+    else:
+        w.break_into_particles(n=101, dim='w', kind='wall')
+        w.save_particles()
+    print_n_particles(w)
+
+    return w
+
+
+def init_striker(load: bool) -> Body:
+    """Инициализировать объект *ударника*, разбив его на частицы.
+
+    :return: Объект *ударника* типа ``Body``.
+    """
+    s = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=30)
+
+    if load:
+        path = 'data/start_striker'
+        with open(path, 'rb') as f:
+            s.particles = pickle.load(f)
+    else:
+        s.break_into_particles(n=25, dim='h', kind='striker')
+        s.save_particles()
+    print_n_particles(s)
+
+    return s
 
 
 def init_space() -> Space:
     """Инициализация физического пространства."""
     return Space((3, 3))
+
+
+def print_n_particles(b: Body):
+    print(f"Количество частиц в '{b.name}': {len(b.particles)}")
 
 
 if __name__ == '__main__':

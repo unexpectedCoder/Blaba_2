@@ -1,5 +1,7 @@
 from tqdm import tqdm
 import numpy as np
+import os
+import pickle
 
 from body import Body
 from space import Space
@@ -49,9 +51,22 @@ class Solver:
                    (3*self.k1*(d - self.rc) + 2*self.k2)
         return np.array([0., 0.])
 
-    def build_mesh(self):
-        """Построить сетку."""
-        print("Построение сетки...")
+    def create_mesh(self, load: bool):
+        """Создать сетку.
+
+        :param load: флаг -- считывать ли данные из файла (*True*) или построить заново (*False*).
+        """
+        if load:
+            path = 'data/start_mesh'
+            print(f"Чтение сетки из файла '{path}'...")
+            with open(path, 'rb') as f:
+                self.mesh = Mesh(pickle.load(f))
+        else:
+            self._build_mesh()
+        print("Сетка создана!")
+
+    def _build_mesh(self):
+        print("Генерация сетки...")
 
         side = self.rs
         size = side, side
@@ -60,10 +75,10 @@ class Solver:
         print("Создание ячеек...")
         cells = []
         for i in range(nr):
-            cells.append([Cell(size=size, pos=(j*size[1], i*size[0] - .5*self.space.h)) for j in range(nc)])
+            cells.append([Cell(size=size, pos=(j * size[1], i * size[0] - .5 * self.space.h)) for j in range(nc)])
         parts = [p for p in self.wall.particles] + [p for p in self.striker.particles]
 
-        print("Заполнение ячеек частицами...\n")
+        print("Заполнение ячеек частицами...")
         for row in tqdm(cells):
             for cell in row:
                 for i, p in enumerate(parts):
@@ -71,7 +86,7 @@ class Solver:
                         cell.add_particle(parts.pop(i))
 
         self.mesh = Mesh(cells)
-        print("Сетка создана!")
+        self.mesh.save_cells()
 
     # TODO начать решать!!!
     # Функция solve должна обходить все частицы, решая для них систему ОДУ и
