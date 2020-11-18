@@ -47,10 +47,10 @@ class Cell:
         """Добавить несколько частиц."""
         self._parts += parts.copy()
 
-    def rm_particles(self, indexes: Iterable):
+    def rm_particles(self, ps: List[Particle]):
         """Удалить несколько частиц по указанным индексам."""
-        for i in indexes:
-            self._parts.pop(i)
+        for p in ps:
+            self._parts.remove(p)
 
     def add_particle(self, p: Particle):
         """Добавить частицу."""

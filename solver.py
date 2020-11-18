@@ -1,10 +1,11 @@
-from typing import Tuple
+from typing import List, Tuple
 from tqdm import tqdm
 import numpy as np
 import pickle
 
 from body import Body
 from space import Space
+from particle import Particle
 from cell import Cell
 from mesh import Mesh
 
@@ -101,7 +102,8 @@ class Solver:
         print("Процесс релаксации завершён!")
 
     def _calc_euler(self, dt: float):
-        for i in range(1, len(self.mesh.cells) - 1):
+        print("Расчёт первого приближения Эйлера для старта метода Верле...")
+        for i in tqdm(range(1, len(self.mesh.cells) - 1)):
             for j in range(1, len(self.mesh.cells[1][:]) - 1):
                 cell = self.mesh.cells[i][j]
                 if not cell.is_empty():
@@ -114,8 +116,8 @@ class Solver:
                     for p in cell.particles:
                         p.velo += p.force / p.mass * dt
                         p.pos += p.velo * dt
-
         self._reset()
+        self._update_mesh()
 
     def _forces_for_particles(self, cells: Tuple[Cell, ...]):
         cell = cells[0]
@@ -141,6 +143,34 @@ class Solver:
             for cell in row:
                 for p in cell.particles:
                     p.reset_force()
+
+    def _update_mesh(self):
+        for i in range(1, len(self.mesh.cells) - 1):
+            for j in range(1, len(self.mesh.cells[1][:]) - 1):
+                cell = self.mesh.cells[i][j]
+                outer_parts = [p for p in cell.particles if p not in cell]  # частицы, вылетевшие из ячейки
+                cell.rm_particles(outer_parts)
+                self._distribute_particles(outer_parts, i, j)
+
+    def _distribute_particles(self, parts: List[Particle], i: int, j: int):
+        # Распределить вылетевшие частицы по соседним ячейкам
+        for p in parts:
+            if p in self.mesh.cells[i-1][j-1]:
+                self.mesh.cells[i-1][j-1].add_particle(p)
+            elif p in self.mesh.cells[i-1][j]:
+                self.mesh.cells[i-1][j].add_particle(p)
+            elif p in self.mesh.cells[i-1][j+1]:
+                self.mesh.cells[i-1][j+1].add_particle(p)
+            elif p in self.mesh.cells[i][j-1]:
+                self.mesh.cells[i][j-1].add_particle(p)
+            elif p in self.mesh.cells[i][j+1]:
+                self.mesh.cells[i][j+1].add_particle(p)
+            elif p in self.mesh.cells[i+1][j-1]:
+                self.mesh.cells[i+1][j-1].add_particle(p)
+            elif p in self.mesh.cells[i+1][j]:
+                self.mesh.cells[i+1][j].add_particle(p)
+            else:
+                self.mesh.cells[i+1][j+1].add_particle(p)
 
     # TODO начать решать!!!
     # Функция solve должна обходить все частицы, решая для них систему ОДУ и
