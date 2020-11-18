@@ -6,14 +6,15 @@ import numpy as np
 class Particle:
     """Класс частицы тела."""
 
-    def __init__(self, velo: np.ndarray, pos: np.ndarray, m: float, color: Tuple[int, int, int]):
+    def __init__(self, velo: np.ndarray, pos: np.ndarray, m: float, color: Tuple[int, int, int],
+                 uuid: int = None):
         self.force = np.array([0., 0.])
         self.velo = velo
         self.pos_prev, self.pos = pos, pos
         self.mass = m
         self.color = color
 
-        self.uuid = uuid4().int
+        self.uuid = uuid4().int if uuid is None else uuid
 
     def __repr__(self):
         return f"{self.__class__.__name__}:" \
@@ -30,7 +31,10 @@ class Particle:
 
     def copy(self) -> 'Particle':
         """:return: Копия экземпляра."""
-        return Particle(self.velo, self.pos, self.mass, self.color)
+        p = Particle(self.velo, self.pos, self.mass, self.color,
+                     uuid=self.uuid)
+        p.pos_prev = self.pos_prev
+        return p
 
     @property
     def force(self) -> np.ndarray:
@@ -38,7 +42,7 @@ class Particle:
 
     @force.setter
     def force(self, f: np.ndarray):
-        self._f = f.copy()
+        self._f = f
 
     @property
     def velo(self) -> np.ndarray:
@@ -47,7 +51,7 @@ class Particle:
 
     @velo.setter
     def velo(self, v: np.ndarray):
-        self._v = v.copy()
+        self._v = v
 
     @property
     def pos(self) -> np.ndarray:
@@ -56,7 +60,16 @@ class Particle:
 
     @pos.setter
     def pos(self, p: np.ndarray):
-        self._pos = p.copy()
+        self._pos = p
+
+    @property
+    def pos_prev(self) -> np.ndarray:
+        """Координата частицы в предшествующий момент времени."""
+        return self._pos_prev
+
+    @pos_prev.setter
+    def pos_prev(self, pp: np.ndarray):
+        self._pos_prev = pp
 
     @property
     def mass(self) -> float:

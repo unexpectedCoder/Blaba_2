@@ -72,4 +72,4 @@ class Visualizer:
         ul = cell.ul.copy()
         ul[1] += (self._win_size[1] // 2) / self._scale[1]
         ul *= self._scale
-        return round(ul[0], 0), round(ul[1], 0), round(size[0], 0), round(size[1], 0)
+        return int(ul[0]), int(ul[1]), int(size[0]) + 1, int(size[1]) + 1

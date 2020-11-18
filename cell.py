@@ -22,7 +22,7 @@ class Cell:
                f" n_particles={len(self.particles)}"
 
     def __contains__(self, p: Particle) -> bool:
-        return self.ul[0] <= p.pos[0] < self.dr[0] and self.ul[1] <= p.pos[1] < self.dr[1]
+        return self.ul[0] <= p.pos[0] <= self.dr[0] and self.ul[1] <= p.pos[1] <= self.dr[1]
 
     @property
     def size(self) -> np.ndarray:
@@ -54,7 +54,7 @@ class Cell:
 
     def add_particle(self, p: Particle):
         """Добавить частицу."""
-        self._parts.append(p)
+        self._parts.append(p.copy())
 
     def rm_particle(self, p: Particle):
         """Удалить заданную частицу."""

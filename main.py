@@ -50,11 +50,11 @@ def modeling():
     space = init_space()
 
     # Основная часть моделирования
-    solver = Solver(wall, striker, space, sigma=.05, epsilon=5e4)
+    solver = Solver(wall, striker, space, sigma=.05, epsilon=1e-10)
     solver.create_mesh(load)
     Visualizer(solver, win_size=(900, 900)).show_static()  # отрисовка начального состояния
 
-    solver.relax(np.array([0., 1.]), .01)
+    solver.relax(np.array([0., 1e-5]), 1e-6, load=load)
     Visualizer(solver, win_size=(900, 900)).show_static()  # отрисовка начального состояния
 
 
@@ -63,14 +63,14 @@ def init_wall(load: bool) -> Body:
 
     :return: Объект *стенки* типа ``Body``.
     """
-    w = Body(mass=.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.55, 0]))
+    w = Body(mass=15.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.62, 0]))
 
     if load:
         path = 'data/start_wall'
         with open(path, 'rb') as f:
             w.particles = pickle.load(f)
     else:
-        w.break_into_particles(n=22, dim='w', kind='wall')
+        w.break_into_particles(n=30, dim='w', kind='wall')
         w.save_particles()
     print_n_particles(w)
 
@@ -82,14 +82,14 @@ def init_striker(load: bool) -> Body:
 
     :return: Объект *ударника* типа ``Body``.
     """
-    s = Body(mass=.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0.04, 0]), rotate_deg=30)
+    s = Body(mass=2.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0.07, 0]), rotate_deg=30)
 
     if load:
         path = 'data/start_striker'
         with open(path, 'rb') as f:
             s.particles = pickle.load(f)
     else:
-        s.break_into_particles(n=8, dim='h', kind='striker')
+        s.break_into_particles(n=15, dim='h', kind='striker')
         s.save_particles()
     print_n_particles(s)
 

@@ -2,6 +2,7 @@ from typing import List, Tuple
 from tqdm import tqdm
 import numpy as np
 import pickle
+import os
 
 from body import Body
 from space import Space
@@ -89,7 +90,7 @@ class Solver:
         self.mesh = Mesh(cells)
         self.mesh.save()
 
-    def relax(self, t_span: np.ndarray, dt: float):
+    def relax(self, t_span: np.ndarray, dt: float, load: bool = False):
         """Запустить процесс релаксации.
 
         :param t_span: промежуток времени, с.
@@ -97,7 +98,19 @@ class Solver:
         """
         print("Запущен процесс релаксации...")
 
-        self._calc_euler(dt)    # начальное приближение
+        if not load and os.path.isfile('data/relax'):
+            with open('data/relax', 'rb') as f:
+                self.mesh = Mesh(pickle.load(f))
+        else:
+            self._calc_euler(dt)  # начальное приближение по Эйлеру
+            t = t_span[0] + dt
+            while t < t_span[1]:
+                print(f" - метод Верле t={t}")
+                self._calc_verlet(dt)
+                t += dt
+
+            with open('data/relax', 'wb') as f:
+                pickle.dump(self.mesh.cells, f)
 
         print("Процесс релаксации завершён!")
 
@@ -116,6 +129,24 @@ class Solver:
                     for p in cell.particles:
                         p.velo += p.force / p.mass * dt
                         p.pos += p.velo * dt
+        self._reset()
+        self._update_mesh()
+
+    def _calc_verlet(self, dt: float):
+        for i in tqdm(range(1, len(self.mesh.cells) - 1)):
+            for j in range(1, len(self.mesh.cells[1][:]) - 1):
+                cell = self.mesh.cells[i][j]
+                if not cell.is_empty():
+                    cells = cell, \
+                            self.mesh.cells[i-1][j-1], self.mesh.cells[i-1][j], self.mesh.cells[i-1][j+1], \
+                            self.mesh.cells[i][j-1], self.mesh.cells[i][j+1], \
+                            self.mesh.cells[i+1][j-1], self.mesh.cells[i+1][j], self.mesh.cells[i+1][j+1]
+                    self._forces_for_particles(cells)
+
+                    for p in cell.particles:
+                        buf = p.pos.copy()
+                        p.pos = 2*p.pos - p.pos_prev + p.force / p.mass * dt**2
+                        p.pos_prev = buf
         self._reset()
         self._update_mesh()
 
