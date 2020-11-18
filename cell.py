@@ -60,6 +60,12 @@ class Cell:
         """Удалить заданную частицу."""
         self._parts.remove(p)
 
+    def is_empty(self) -> bool:
+        """Пуста ли ячейка (*True*) или нет (*False*)."""
+        if self.particles:
+            return False
+        return True
+
 
 if __name__ == '__main__':
     print(Cell(size=(1, 1), pos=(2, 3)))

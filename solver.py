@@ -1,6 +1,6 @@
+from typing import Tuple
 from tqdm import tqdm
 import numpy as np
-import os
 import pickle
 
 from body import Body
@@ -86,7 +86,61 @@ class Solver:
                         cell.add_particle(parts.pop(i))
 
         self.mesh = Mesh(cells)
-        self.mesh.save_cells()
+        self.mesh.save()
+
+    def relax(self, t_span: np.ndarray, dt: float):
+        """Запустить процесс релаксации.
+
+        :param t_span: промежуток времени, с.
+        :param dt: шаг по времени, с.
+        """
+        print("Запущен процесс релаксации...")
+
+        self._calc_euler(dt)    # начальное приближение
+
+        print("Процесс релаксации завершён!")
+
+    def _calc_euler(self, dt: float):
+        for i in range(1, len(self.mesh.cells) - 1):
+            for j in range(1, len(self.mesh.cells[1][:]) - 1):
+                cell = self.mesh.cells[i][j]
+                if not cell.is_empty():
+                    cells = cell, \
+                            self.mesh.cells[i-1][j-1], self.mesh.cells[i-1][j], self.mesh.cells[i-1][j+1], \
+                            self.mesh.cells[i][j-1], self.mesh.cells[i][j+1], \
+                            self.mesh.cells[i+1][j-1], self.mesh.cells[i+1][j], self.mesh.cells[i+1][j+1]
+                    self._forces_for_particles(cells)
+
+                    for p in cell.particles:
+                        p.velo += p.force / p.mass * dt
+                        p.pos += p.velo * dt
+
+        self._reset()
+
+    def _forces_for_particles(self, cells: Tuple[Cell, ...]):
+        cell = cells[0]
+        neighbor_cells = cells[1:]
+
+        for i in range(len(cell.particles) - 1):
+            # Воздействие от частиц в центральной ячейке
+            for j in range(i+1, len(cell.particles)):
+                dr = cell.particles[i].pos - cell.particles[j].pos
+                f = -self.dU(dr)
+                cell.particles[i].force += f
+                cell.particles[j].force -= f                        # 3-й закон Ньютона
+
+            # Воздействие от частиц соседних ячеек
+            for neighbor in neighbor_cells:
+                if not neighbor.is_empty():
+                    for p in neighbor.particles:
+                        dr = cell.particles[i].pos - p.pos
+                        cell.particles[i].force -= self.dU(dr)
+
+    def _reset(self):
+        for row in self.mesh.cells:
+            for cell in row:
+                for p in cell.particles:
+                    p.reset_force()
 
     # TODO начать решать!!!
     # Функция solve должна обходить все частицы, решая для них систему ОДУ и

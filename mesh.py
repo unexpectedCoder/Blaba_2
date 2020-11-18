@@ -16,7 +16,7 @@ class Mesh:
         """Матрица клеток сетки."""
         return self._cells
 
-    def save_cells(self):
+    def save(self):
         """Сохранить сетку (матрицу с частицами) с помощью модуля *pickle*."""
         if not os.path.isdir('data'):
             os.mkdir('data')
