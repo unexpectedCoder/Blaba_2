@@ -98,19 +98,12 @@ class Solver:
         """
         print("Запущен процесс релаксации...")
 
-        if not load and os.path.isfile('data/relax'):
-            with open('data/relax', 'rb') as f:
-                self.mesh = Mesh(pickle.load(f))
-        else:
-            self._calc_euler(dt)  # начальное приближение по Эйлеру
-            t = t_span[0] + dt
-            while t < t_span[1]:
-                print(f" - метод Верле t={t}")
-                self._calc_verlet(dt)
-                t += dt
-
-            with open('data/relax', 'wb') as f:
-                pickle.dump(self.mesh.cells, f)
+        self._calc_euler(dt)  # начальное приближение по Эйлеру
+        t = t_span[0] + dt
+        while t < t_span[1]:
+            print(f" - метод Верле t={t}")
+            self._calc_verlet(dt)
+            t += dt
 
         print("Процесс релаксации завершён!")
 

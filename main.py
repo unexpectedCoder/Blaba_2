@@ -54,7 +54,7 @@ def modeling():
     solver.create_mesh(load)
     Visualizer(solver, win_size=(900, 900)).show_static()  # отрисовка начального состояния
 
-    solver.relax(np.array([0., 1e-5]), 1e-6, load=load)
+    solver.relax(np.array([0., .5]), 1e-4)
     Visualizer(solver, win_size=(900, 900)).show_static()  # отрисовка начального состояния
 
 
@@ -70,7 +70,7 @@ def init_wall(load: bool) -> Body:
         with open(path, 'rb') as f:
             w.particles = pickle.load(f)
     else:
-        w.break_into_particles(n=30, dim='w', kind='wall')
+        w.break_into_particles(n=50, dim='w', kind='wall')
         w.save_particles()
     print_n_particles(w)
 
