@@ -60,14 +60,6 @@ class Cell:
         """Удалить заданную частицу."""
         self._parts.remove(p)
 
-    def as_draw_rect(self, scale: np.ndarray, win_size: Tuple[int, int]) -> Tuple[int, int, int, int]:
-        """Преобразовать физические координаты в экранные."""
-        size = self.size * scale
-        ul = self.ul.copy()
-        ul[1] += (win_size[1] // 2) / scale[1]
-        ul *= scale
-        return round(ul[0], 0), round(ul[1], 0), round(size[0], 0), round(size[1], 0)
-
 
 if __name__ == '__main__':
     print(Cell(size=(1, 1), pos=(2, 3)))

@@ -187,12 +187,6 @@ class Body:
             self.particles = [Particle(velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
                               for pos in positions]
 
-    def get_draw_particles(self, scale: np.ndarray, win_size: Tuple[int, int]) -> np.ndarray:
-        """Преобразование физических координат в экранные координаты."""
-        draw_parts = np.array([p.pos.copy() for p in self.particles], order='F')
-        draw_parts[:, 1] += (win_size[1] // 2) / scale[1]   # центрирование на экране относительно оси Ox
-        return draw_parts * scale
-
     def save_image(self):
         plt.figure("Body", figsize=(6, 6))
         parts = np.array([p.pos.copy() for p in self.particles], order='F')
