@@ -6,8 +6,10 @@ import numpy as np
 class Particle:
     """Класс частицы тела."""
 
-    def __init__(self, velo: np.ndarray, pos: np.ndarray, m: float, color: Tuple[int, int, int],
+    def __init__(self, name: str, velo: np.ndarray, pos: np.ndarray, m: float, color: Tuple[int, int, int],
                  uuid: int = None):
+        self._name = name
+
         self.force = np.array([0., 0.])
         self.velo = velo
         self.pos_prev, self.pos = pos, pos
@@ -18,6 +20,7 @@ class Particle:
 
     def __repr__(self):
         return f"{self.__class__.__name__}:" \
+               f" name='{self.name}'" \
                f" velo={self.velo}" \
                f" pos={self.pos}" \
                f" mass={self.mass}" \
@@ -31,10 +34,14 @@ class Particle:
 
     def copy(self) -> 'Particle':
         """:return: Копия экземпляра."""
-        p = Particle(self.velo, self.pos, self.mass, self.color,
+        p = Particle(self.name, self.velo, self.pos, self.mass, self.color,
                      uuid=self.uuid)
         p.pos_prev = self.pos_prev
         return p
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def force(self) -> np.ndarray:

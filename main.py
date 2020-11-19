@@ -50,12 +50,19 @@ def modeling():
     space = init_space()
 
     # Основная часть моделирования
-    solver = Solver(wall, striker, space, sigma=.05, epsilon=1e-10)
+    solver = Solver(wall, striker, space, sigma=.02, epsilon=1e-12)
     solver.create_mesh(load)
-    Visualizer(solver, win_size=(900, 900)).show_static()  # отрисовка начального состояния
+    Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка начального состояния
 
-    solver.relax(np.array([0., .5]), 1e-4)
-    Visualizer(solver, win_size=(900, 900)).show_static()  # отрисовка начального состояния
+    solver.relax((0., .2), 2e-3)
+    Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка конца релаксации
+
+    v0 = np.array([1000, 0])
+    a = striker.rotate
+    v0 = np.matmul([[np.cos(a), np.sin(a)],
+                    [-np.sin(a), np.cos(a)]], v0.T)
+    solver.solve((0, .05), 1e-4, v0, striker.name)
+    Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка конца моделирования
 
 
 def init_wall(load: bool) -> Body:
@@ -70,7 +77,7 @@ def init_wall(load: bool) -> Body:
         with open(path, 'rb') as f:
             w.particles = pickle.load(f)
     else:
-        w.break_into_particles(n=50, dim='w', kind='wall')
+        w.break_into_particles(n=21, dim='w', kind='wall')
         w.save_particles()
     print_n_particles(w)
 
@@ -89,7 +96,7 @@ def init_striker(load: bool) -> Body:
         with open(path, 'rb') as f:
             s.particles = pickle.load(f)
     else:
-        s.break_into_particles(n=15, dim='h', kind='striker')
+        s.break_into_particles(n=10, dim='h', kind='striker')
         s.save_particles()
     print_n_particles(s)
 

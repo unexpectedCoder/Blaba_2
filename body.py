@@ -182,10 +182,10 @@ class Body:
             rotated_pos = np.array([np.matmul([[np.cos(a), np.sin(a)],
                                                [-np.sin(a), np.cos(a)]], p.T) for p in positions])
             rotated_pos[:, 0] += self.width
-            self.particles = [Particle(velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
+            self.particles = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
                               for pos in rotated_pos]
         else:
-            self.particles = [Particle(velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
+            self.particles = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
                               for pos in positions]
 
     def save_image(self):

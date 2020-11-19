@@ -2,7 +2,6 @@ from typing import List, Tuple
 from tqdm import tqdm
 import numpy as np
 import pickle
-import os
 
 from body import Body
 from space import Space
@@ -90,21 +89,19 @@ class Solver:
         self.mesh = Mesh(cells)
         self.mesh.save()
 
-    def relax(self, t_span: np.ndarray, dt: float, load: bool = False):
+    def relax(self, t_span: Tuple[float, float], dt: float):
         """Запустить процесс релаксации.
 
         :param t_span: промежуток времени, с.
         :param dt: шаг по времени, с.
         """
         print("Запущен процесс релаксации...")
-
-        self._calc_euler(dt)  # начальное приближение по Эйлеру
-        t = t_span[0] + dt
+        self._calc_euler(dt / 10)  # начальное приближение по Эйлеру
+        t = t_span[0] + dt / 10
         while t < t_span[1]:
             print(f" - метод Верле t={t}")
             self._calc_verlet(dt)
             t += dt
-
         print("Процесс релаксации завершён!")
 
     def _calc_euler(self, dt: float):
@@ -126,7 +123,7 @@ class Solver:
         self._update_mesh()
 
     def _calc_verlet(self, dt: float):
-        for i in tqdm(range(1, len(self.mesh.cells) - 1)):
+        for i in range(1, len(self.mesh.cells) - 1):
             for j in range(1, len(self.mesh.cells[1][:]) - 1):
                 cell = self.mesh.cells[i][j]
                 if not cell.is_empty():
@@ -196,12 +193,30 @@ class Solver:
             else:
                 self.mesh.cells[i+1][j+1].add_particle(p)
 
-    # TODO начать решать!!!
-    # Функция solve должна обходить все частицы, решая для них систему ОДУ и
-    # сохраняя результаты в файл numpy (*.npz, скорее всего)
-    def solve(self, dt: float):
+    def solve(self, t_span: Tuple[float, float], dt: float, v0: np.ndarray, body_name: str):
         """Основная функция, решающая систему ДУ для каждого момента времени.
 
+        :param t_span: интервал времени, с.
         :param dt: шаг по времени, с.
+        :param v0: вектор начальной скорости ударника, м/с.
+        :param body_name: имя тела, для которого назначается начальная скорость *v0*.
         """
-        pass
+        self._set_v0(v0, body_name)
+
+        print("Запущен процесс моделирования взаимодействия ударника со стенкой...")
+        t = t_span[0] + dt
+        while t < t_span[1]:
+            print(f" - шаг t={t}")
+            self._calc_verlet(dt)
+            t += dt
+        print("Процесс моделирования взаимодействия завершён!")
+
+    def _set_v0(self, v0: np.ndarray, body_name: str):
+        print(f"Установка вектора начальной скорости для каждой частицы тела '{body_name}'...")
+        for row in tqdm(self.mesh.cells):
+            for cell in row:
+                for p in cell.particles:
+                    if p.name == body_name:
+                        print(v0)
+                        p.velo = v0
+        print("Готово!")
