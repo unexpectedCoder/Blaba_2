@@ -7,7 +7,7 @@ from solver import Solver
 
 
 def main():
-    # make_some_data_for_report()     # для начальных картинок в отчёт
+    make_some_data_for_report()     # для начальных картинок в отчёт
     modeling()
 
     return 0
@@ -19,7 +19,7 @@ def make_some_data_for_report():
 
     # Два тела - стенка и ударник
     wall = Body(mass=5, size=(10, 30), name='wall', color=(128, 128, 128), pos=np.array([20, 0]))
-    striker = Body(mass=1, size=(10, 3), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=0)
+    striker = Body(mass=1, size=(10, 3), name='striker', color=(0, 0, 0), pos=np.array([0, 0]), rotate_deg=30)
     # Контрольный вывод
     print(wall, striker, sep='\n')
     # Разбивка тел на частицы
@@ -43,21 +43,20 @@ def modeling():
 
     # Основная часть моделирования
     # Начальное состояние
-    solver = Solver()
-    solver.gen_mesh(space, rc=0.01)
+    solver = Solver(sigma=0.01, epsilon=1.)
+    solver.gen_mesh(space)
     Visualizer(space, solver, win_size=(900, 900)).show_static()
     # TODO Релаксация
     # ... для стенки
-    solver.fill_mesh(wall)
+    wall = solver.relax(wall)
     Visualizer(space, solver, win_size=(900, 900)).show_static()
     solver.clear_mesh()
     # ... для ударника
-    solver.fill_mesh(striker)
+    striker = solver.relax(striker)
     Visualizer(space, solver, win_size=(900, 900)).show_static()
     solver.clear_mesh()
     # TODO Основная симуляция
-    solver.fill_mesh(wall)
-    solver.fill_mesh(striker)
+    solver.solve(wall, striker)
     Visualizer(space, solver, win_size=(900, 900)).show_static()
 
 
@@ -67,8 +66,7 @@ def init_wall() -> Body:
     :return: Объект *стенки* типа ``Body``.
     """
     w = Body(mass=5., size=(.12, .75), name='wall', color=(128, 128, 128), pos=np.array([.3, 0]))
-    w.break_into_particles(n=2, dim='w', kind='wall')
-    w.save_particles()
+    w.break_into_particles(n=10, dim='w', kind='wall')
     print_n_particles(w)
     return w
 
@@ -80,7 +78,6 @@ def init_striker() -> Body:
     """
     s = Body(mass=1., size=(.1, .02), name='striker', color=(0, 0, 0), pos=np.array([0.174, 0.]), rotate_deg=0)
     s.break_into_particles(n=2, dim='h', kind='wall')
-    s.save_particles()
     print_n_particles(s)
     return s
 
