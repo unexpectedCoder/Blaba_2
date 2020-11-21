@@ -40,24 +40,26 @@ def modeling():
     wall = init_wall()
     striker = init_striker()
     space = init_space()
+    vis = Visualizer(space, win_size=(900, 900))
 
     # Основная часть моделирования
     # Начальное состояние
-    solver = Solver(sigma=0.01, epsilon=1.)
-    solver.gen_mesh(space)
-    Visualizer(space, solver, win_size=(900, 900)).show_static()
+    solver = Solver(wall, striker, space,
+                    sigma=0.01, epsilon=1e-5)
+    solver.gen_mesh()
+    vis.show_in_static(solver)
     # TODO Релаксация
-    # ... для стенки
-    wall = solver.relax(wall)
-    Visualizer(space, solver, win_size=(900, 900)).show_static()
+    # ...ударника
+    striker = solver.relax_striker(2e-4, (0, .05))
+    vis.show_in_static(solver)
     solver.clear_mesh()
-    # ... для ударника
-    striker = solver.relax(striker)
-    Visualizer(space, solver, win_size=(900, 900)).show_static()
+    # ...стенки
+    wall = solver.relax_wall(5e-3, (0, .05))
+    vis.show_in_static(solver)
     solver.clear_mesh()
     # TODO Основная симуляция
-    solver.solve(wall, striker)
-    Visualizer(space, solver, win_size=(900, 900)).show_static()
+    solver.solve(wall.copy(), striker.copy())
+    vis.show_in_static(solver)
 
 
 def init_wall() -> Body:
@@ -66,7 +68,7 @@ def init_wall() -> Body:
     :return: Объект *стенки* типа ``Body``.
     """
     w = Body(mass=5., size=(.12, .75), name='wall', color=(128, 128, 128), pos=np.array([.3, 0]))
-    w.break_into_particles(n=10, dim='w', kind='wall')
+    w.break_into_particles(n=6, dim='w', kind='wall')
     print_n_particles(w)
     return w
 

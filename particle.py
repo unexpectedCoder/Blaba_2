@@ -23,11 +23,9 @@ class Particle:
                f" name='{self.name}'" \
                f" velo={self.velo}" \
                f" pos={self.pos}" \
+               f" force={self.force}" \
                f" mass={self.mass}" \
                f" color={self.color}"
-
-    def __hash__(self):
-        return self.uuid
 
     def __eq__(self, p: 'Particle'):
         return p.uuid == self.uuid
@@ -37,6 +35,7 @@ class Particle:
         p = Particle(self.name, self.velo, self.pos, self.mass, self.color,
                      uuid=self.uuid)
         p.pos_prev = self.pos_prev
+        p.force = self.force
         return p
 
     @property

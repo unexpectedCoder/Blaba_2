@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -27,7 +27,7 @@ class Body:
                  color: Tuple[int, int, int],
                  pos: np.ndarray,
                  rotate_deg: float = 0.):
-        self.particles = None
+        self._parts = []
 
         self.mass = mass
         self.size = size
@@ -49,8 +49,8 @@ class Body:
         """:return: Копия экземпляра типа ``Body``."""
         b = Body(self.mass, self.size, self.name, self.color, self.pos,
                  rotate_deg=np.rad2deg(self.rotate))
-        if self.particles is not None:
-            b.particles = self.particles
+        if self._parts:
+            b._parts = [p.copy() for p in self._parts]
         return b
 
     @property
@@ -116,7 +116,8 @@ class Body:
     def pos(self, p: np.ndarray):
         self._pos = p.copy()
         if self._parts is not None:
-            self.particles += self._pos
+            for p in self._parts:
+                p.pos += self._pos
 
     @property
     def particles(self) -> List[Particle]:
@@ -124,11 +125,8 @@ class Body:
         return self._parts
 
     @particles.setter
-    def particles(self, parts: Union[List[Particle], None]):
-        if parts is not None:
-            self._parts = parts.copy()
-        else:
-            self._parts = None
+    def particles(self, ps: List[Particle]):
+        self._parts = [p.copy() for p in ps]
 
     @property
     def rotate(self) -> float:
@@ -183,11 +181,11 @@ class Body:
             rotated_pos = np.array([np.matmul([[np.cos(a), -np.sin(a)],
                                                [np.sin(a), np.cos(a)]], p.T) for p in positions])
             rotated_pos[:, 0] += self.width + self.pos[0]
-            self.particles = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
-                              for pos in rotated_pos]
+            self._parts = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
+                           for pos in rotated_pos]
         else:
-            self.particles = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
-                              for pos in positions]
+            self._parts = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
+                           for pos in positions]
 
     def save_image(self):
         plt.figure("Body", figsize=(6, 6))

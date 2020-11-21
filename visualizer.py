@@ -3,9 +3,9 @@ from pygame.locals import *
 import pygame
 import numpy as np
 
-from space import Space
 from cell import Cell
 from solver import Solver
+from space import Space
 
 
 L_BLUE = 225, 225, 255
@@ -13,18 +13,22 @@ WHITE = 255, 255, 255
 
 
 class Visualizer:
-    def __init__(self, space: Space, solver: Solver, win_size: Tuple[int, int] = (1200, 600)):
-        self.cells = solver.cells.copy()
+    def __init__(self, space: Space, win_size: Tuple[int, int]):
+        self.cells = None
+
         self._win_size = win_size
         self._scale = np.array([win_size[0] / space.size[0], win_size[1] / space.size[1]])
-
-        pygame.init()
-        self.DISPLAYSURF = pygame.display.set_mode(win_size)
-        pygame.display.set_caption("Particle Dynamics Method")
         self._fps = 1
         self._fps_clock = pygame.time.Clock()
+        self.DISPLAYSURF = None
 
-    def show_static(self):
+    def show_in_static(self, solver: Solver):
+        pygame.init()
+        self.DISPLAYSURF = pygame.display.set_mode(self._win_size)
+        pygame.display.set_caption("Particle Dynamics Method")
+
+        self.cells = solver.cells
+
         self.draw()
         pygame.display.update()
 
