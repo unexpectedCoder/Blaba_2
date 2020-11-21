@@ -70,7 +70,7 @@ def init_wall(load: bool) -> Body:
 
     :return: Объект *стенки* типа ``Body``.
     """
-    w = Body(mass=5., size=(.1, .75), name='wall', color=(128, 128, 128), pos=np.array([.2, 0]))
+    w = Body(mass=5., size=(.12, .75), name='wall', color=(128, 128, 128), pos=np.array([.2, 0]))
 
     if load:
         path = 'data/start_wall'
@@ -89,7 +89,7 @@ def init_striker(load: bool) -> Body:
 
     :return: Объект *ударника* типа ``Body``.
     """
-    s = Body(mass=1., size=(.12, .012), name='striker', color=(0, 0, 0), pos=np.array([0.091, 0.]), rotate_deg=30)
+    s = Body(mass=1., size=(.12, .012), name='striker', color=(0, 0, 0), pos=np.array([0.075, 0.]), rotate_deg=30)
 
     if load:
         path = 'data/start_striker'

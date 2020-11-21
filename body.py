@@ -180,10 +180,10 @@ class Body:
         # Вращение
         a = self.rotate
         if a != 0:
-            positions[:, 0] -= self.width
+            positions[:, 0] -= self.width + self.pos[0]
             rotated_pos = np.array([np.matmul([[np.cos(a), -np.sin(a)],
                                                [np.sin(a), np.cos(a)]], p.T) for p in positions])
-            rotated_pos[:, 0] += self.width
+            rotated_pos[:, 0] += self.width + self.pos[0]
             self.particles = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
                               for pos in rotated_pos]
         else:

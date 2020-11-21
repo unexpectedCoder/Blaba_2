@@ -37,23 +37,6 @@ class Solver:
         if w.particles is None or s.particles is None:
             raise ValueError("тела не разбиты на частицы!")
 
-    def dU(self, dr: np.ndarray) -> np.ndarray:
-        """Градиент потенциала Леннарда-Джонса.
-
-        :param dr: вектор расстояния между двумя частицами.
-        :return: Градиент потенциала Леннарда-Джонса со сглаживанием сплайнами.
-        """
-        d = np.sqrt(dr[0]**2 + dr[1]**2)
-        if d <= self.rs:
-            return dr / d * \
-                   24 * self.epsilon * self.sigma**6 * \
-                   (d**6 - 2 * self.sigma**6) / d**13
-        if self.rs < d <= self.rc:
-            return dr / d * \
-                   (d - self.rc) * \
-                   (3*self.k1*(d - self.rc) + 2*self.k2)
-        return np.array([0., 0.])
-
     def create_mesh(self, load: bool):
         """Создать сетку.
 
@@ -88,7 +71,7 @@ class Solver:
         return cells
 
     def _fill_mesh(self, cells: List[List[Cell]]) -> List[List[Cell]]:
-        print("Заполнение ячеек частицами...")
+        print("\tЗаполнение ячеек частицами...")
 
         parts = [p for p in self.striker.particles] + [p for p in self.wall.particles]
         for row in tqdm(cells):
@@ -103,7 +86,7 @@ class Solver:
         if parts:
             raise ValueError("Не все частицы попали в сетку!")
 
-        print("Готово!")
+        print("\tГотово!")
         return cells
 
     def relax(self, t_span: Tuple[float, float], dt: float):
@@ -203,6 +186,23 @@ class Solver:
                 if not neighbor.is_empty():
                     for p in neighbor.particles:
                         pi.force -= self.dU(pi.pos - p.pos)
+
+    def dU(self, dr: np.ndarray) -> np.ndarray:
+        """Градиент потенциала Леннарда-Джонса.
+
+        :param dr: вектор расстояния между двумя частицами.
+        :return: Градиент потенциала Леннарда-Джонса со сглаживанием сплайнами.
+        """
+        d = np.sqrt(dr[0]**2 + dr[1]**2)
+        if d <= self.rs:
+            return dr / d * \
+                   24 * self.epsilon * self.sigma**6 * \
+                   (d**6 - 2 * self.sigma**6) / d**13
+        if self.rs < d <= self.rc:
+            return dr / d * \
+                   (d - self.rc) * \
+                   (3*self.k1*(d - self.rc) + 2*self.k2)
+        return np.array([0., 0.])
 
     def _update_mesh(self):
         for i in range(1, len(self.mesh.cells) - 1):
