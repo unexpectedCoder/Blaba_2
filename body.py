@@ -159,17 +159,19 @@ class Body:
         positions = []
         y1 = lambda x: np.tan(np.deg2rad(15)) * (x - self.width) + .5 * self.height
         y2 = lambda x: -np.tan(np.deg2rad(15)) * (x - self.width) + .5 * self.height
-        for i in range(nh):         # вверх по стенке
-            for j in range(nw):     # поперёк стенки
-                h = i * dh
-                w = j * dw if i % 2 == 0 else j * dw + r
+
+        for i in range(nh):         # по высоте стенки
+            for j in range(nw):     # по ширине стенки
+                y = i * dh
+                x = j * dw if i % 2 == 0 else j * dw + r
                 if kind == 'striker':
-                    if y1(w) < h < y2(w):
-                        positions.append([w, h])
+                    if y1(x) < y < y2(x):
+                        positions.append([x, y])
                 else:
-                    positions.append([w, h])
-        positions = np.array(positions, dtype=np.float64)
+                    positions.append([x, y])
+        positions = np.array(positions)
         positions += self.pos
+
         if center:
             positions[:, 1] -= .5 * self.height
 
@@ -179,8 +181,8 @@ class Body:
         a = self.rotate
         if a != 0:
             positions[:, 0] -= self.width
-            rotated_pos = np.array([np.matmul([[np.cos(a), np.sin(a)],
-                                               [-np.sin(a), np.cos(a)]], p.T) for p in positions])
+            rotated_pos = np.array([np.matmul([[np.cos(a), -np.sin(a)],
+                                               [np.sin(a), np.cos(a)]], p.T) for p in positions])
             rotated_pos[:, 0] += self.width
             self.particles = [Particle(name=self.name, velo=np.array([0., 0.]), pos=pos, m=dm, color=self.color)
                               for pos in rotated_pos]

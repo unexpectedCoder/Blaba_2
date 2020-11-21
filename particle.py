@@ -96,10 +96,6 @@ class Particle:
     def color(self, c: Tuple[int, int, int]):
         self._color = c
 
-    def reset_force(self):
-        """Сбросить суммарный вектор силы в ноль."""
-        self.force = np.array([0., 0.])
-
 
 if __name__ == '__main__':
-    print(Particle(velo=np.array([10, 12.5]), pos=np.array([0., -1.75]), m=.05, color=(182, 75, 200)))
+    print(Particle(name='noname', velo=np.array([10, 12.5]), pos=np.array([0., -1.75]), m=.05, color=(182, 75, 200)))

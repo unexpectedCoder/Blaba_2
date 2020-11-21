@@ -29,6 +29,8 @@ class Solver:
         self.k2 = -24192/3211 * self.epsilon / self.rs**2
 
         self.mesh = None
+        self._striker_parts = []
+        self._wall_parts = []
 
     @staticmethod
     def check_bodies_particles(w: Body, s: Body):
@@ -63,31 +65,46 @@ class Solver:
             with open(path, 'rb') as f:
                 self.mesh = Mesh(pickle.load(f))
         else:
-            self._build_mesh()
+            print("Генерация сетки...")
+            cells = self._build_mesh()
+            cells = self._fill_mesh(cells)
+            self.mesh = Mesh(cells)
+            self.mesh.save()
         print("Сетка создана!")
 
-    def _build_mesh(self):
-        print("Генерация сетки...")
+    def _build_mesh(self) -> List[List[Cell]]:
+        print("\tСоздание ячеек...")
 
-        side = self.rs
+        side = 2 * self.rs
         size = side, side
         nc, nr = int(self.space.w / size[0]), int(self.space.h / size[1])
 
-        print("Создание ячеек...")
         cells = []
         for i in range(nr):
-            cells.append([Cell(size=size, pos=(j * size[1], i * size[0] - .5 * self.space.h)) for j in range(nc)])
-        parts = [p for p in self.wall.particles] + [p for p in self.striker.particles]
+            cells.append([Cell(size=size, pos=(j*size[1], i*size[0] - .5*self.space.h + size[0]))
+                          for j in range(nc)])
 
+        print("\tГотово!")
+        return cells
+
+    def _fill_mesh(self, cells: List[List[Cell]]) -> List[List[Cell]]:
         print("Заполнение ячеек частицами...")
+
+        parts = [p for p in self.striker.particles] + [p for p in self.wall.particles]
         for row in tqdm(cells):
             for cell in row:
+                rm_parts = []
                 for i, p in enumerate(parts):
                     if p in cell:
-                        cell.add_particle(parts.pop(i))
+                        cell.add_particle(p)
+                        rm_parts.append(p)
+                for rp in rm_parts:
+                    parts.remove(rp)
+        if parts:
+            raise ValueError("Не все частицы попали в сетку!")
 
-        self.mesh = Mesh(cells)
-        self.mesh.save()
+        print("Готово!")
+        return cells
 
     def relax(self, t_span: Tuple[float, float], dt: float):
         """Запустить процесс релаксации.
@@ -99,71 +116,93 @@ class Solver:
         self._calc_euler(dt / 10)  # начальное приближение по Эйлеру
         t = t_span[0] + dt / 10
         while t < t_span[1]:
-            print(f" - метод Верле t={t}")
+            print(f" - шаг t={t:.6f}")
             self._calc_verlet(dt)
             t += dt
         print("Процесс релаксации завершён!")
 
     def _calc_euler(self, dt: float):
         print("Расчёт первого приближения Эйлера для старта метода Верле...")
-        for i in tqdm(range(1, len(self.mesh.cells) - 1)):
-            for j in range(1, len(self.mesh.cells[1][:]) - 1):
+        for i in tqdm(range(1, len(self.mesh.cells[:-1]))):
+            for j in range(1, len(self.mesh.cells[1][:-1])):
                 cell = self.mesh.cells[i][j]
                 if not cell.is_empty():
                     cells = cell, \
                             self.mesh.cells[i-1][j-1], self.mesh.cells[i-1][j], self.mesh.cells[i-1][j+1], \
                             self.mesh.cells[i][j-1], self.mesh.cells[i][j+1], \
                             self.mesh.cells[i+1][j-1], self.mesh.cells[i+1][j], self.mesh.cells[i+1][j+1]
+
                     self._forces_for_particles(cells)
 
                     for p in cell.particles:
                         p.velo += p.force / p.mass * dt
                         p.pos += p.velo * dt
-        self._reset()
         self._update_mesh()
 
+    def solve(self, t_span: Tuple[float, float], dt: float, v0: np.ndarray, body_name: str):
+        """Основная функция, решающая систему ДУ для каждого момента времени.
+
+        :param t_span: интервал времени, с.
+        :param dt: шаг по времени, с.
+        :param v0: вектор начальной скорости ударника, м/с.
+        :param body_name: имя тела, для которого назначается начальная скорость *v0*.
+        """
+        self._set_v0(v0, body_name)
+
+        print("Запущен процесс моделирования взаимодействия ударника со стенкой...")
+        t = t_span[0] + dt
+        while t < t_span[1]:
+            print(f" - шаг t={t:.6f}")
+            self._calc_verlet(dt)
+            t += dt
+        print("Процесс моделирования взаимодействия завершён!")
+
+    def _set_v0(self, v0: np.ndarray, body_name: str):
+        print(f"Установка вектора начальной скорости для каждой частицы тела '{body_name}'...")
+        for row in tqdm(self.mesh.cells):
+            for cell in row:
+                for p in cell.particles:
+                    if p.name == body_name:
+                        p.velo = v0
+        print("Готово!")
+
     def _calc_verlet(self, dt: float):
-        for i in range(1, len(self.mesh.cells) - 1):
-            for j in range(1, len(self.mesh.cells[1][:]) - 1):
+        for i in range(1, len(self.mesh.cells[:-1])):
+            for j in range(1, len(self.mesh.cells[1][:-1])):
                 cell = self.mesh.cells[i][j]
                 if not cell.is_empty():
                     cells = cell, \
                             self.mesh.cells[i-1][j-1], self.mesh.cells[i-1][j], self.mesh.cells[i-1][j+1], \
                             self.mesh.cells[i][j-1], self.mesh.cells[i][j+1], \
                             self.mesh.cells[i+1][j-1], self.mesh.cells[i+1][j], self.mesh.cells[i+1][j+1]
+
                     self._forces_for_particles(cells)
 
                     for p in cell.particles:
                         buf = p.pos.copy()
                         p.pos = 2*p.pos - p.pos_prev + p.force / p.mass * dt**2
+                        # p.velo += .5 * (p.pos - p.pos_prev) / dt
+                        # p.pos += p.velo * dt
                         p.pos_prev = buf
-        self._reset()
         self._update_mesh()
 
     def _forces_for_particles(self, cells: Tuple[Cell, ...]):
         cell = cells[0]
         neighbor_cells = cells[1:]
 
-        for i in range(len(cell.particles) - 1):
+        for pi in cell.particles:
+            pi.force = np.array([0., 0.])
+
             # Воздействие от частиц в центральной ячейке
-            for j in range(i+1, len(cell.particles)):
-                dr = cell.particles[i].pos - cell.particles[j].pos
-                f = -self.dU(dr)
-                cell.particles[i].force += f
-                cell.particles[j].force -= f                        # 3-й закон Ньютона
+            for pj in cell.particles:
+                if pj != pi:
+                    pi.force -= self.dU(pi.pos - pj.pos)
 
             # Воздействие от частиц соседних ячеек
             for neighbor in neighbor_cells:
                 if not neighbor.is_empty():
                     for p in neighbor.particles:
-                        dr = cell.particles[i].pos - p.pos
-                        cell.particles[i].force -= self.dU(dr)
-
-    def _reset(self):
-        for row in self.mesh.cells:
-            for cell in row:
-                for p in cell.particles:
-                    p.reset_force()
+                        pi.force -= self.dU(pi.pos - p.pos)
 
     def _update_mesh(self):
         for i in range(1, len(self.mesh.cells) - 1):
@@ -190,33 +229,5 @@ class Solver:
                 self.mesh.cells[i+1][j-1].add_particle(p)
             elif p in self.mesh.cells[i+1][j]:
                 self.mesh.cells[i+1][j].add_particle(p)
-            else:
+            elif p in self.mesh.cells[i+1][j+1]:
                 self.mesh.cells[i+1][j+1].add_particle(p)
-
-    def solve(self, t_span: Tuple[float, float], dt: float, v0: np.ndarray, body_name: str):
-        """Основная функция, решающая систему ДУ для каждого момента времени.
-
-        :param t_span: интервал времени, с.
-        :param dt: шаг по времени, с.
-        :param v0: вектор начальной скорости ударника, м/с.
-        :param body_name: имя тела, для которого назначается начальная скорость *v0*.
-        """
-        self._set_v0(v0, body_name)
-
-        print("Запущен процесс моделирования взаимодействия ударника со стенкой...")
-        t = t_span[0] + dt
-        while t < t_span[1]:
-            print(f" - шаг t={t}")
-            self._calc_verlet(dt)
-            t += dt
-        print("Процесс моделирования взаимодействия завершён!")
-
-    def _set_v0(self, v0: np.ndarray, body_name: str):
-        print(f"Установка вектора начальной скорости для каждой частицы тела '{body_name}'...")
-        for row in tqdm(self.mesh.cells):
-            for cell in row:
-                for p in cell.particles:
-                    if p.name == body_name:
-                        print(v0)
-                        p.velo = v0
-        print("Готово!")

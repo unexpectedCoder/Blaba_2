@@ -9,7 +9,7 @@ from solver import Solver
 
 
 def main():
-    make_some_data_for_report()     # для начальных картинок в отчёт
+    # make_some_data_for_report()     # для начальных картинок в отчёт
     modeling()
 
     return 0
@@ -50,19 +50,19 @@ def modeling():
     space = init_space()
 
     # Основная часть моделирования
-    solver = Solver(wall, striker, space, sigma=.02, epsilon=1e-12)
+    solver = Solver(wall, striker, space, sigma=.01, epsilon=5e3)
     solver.create_mesh(load)
     Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка начального состояния
 
-    solver.relax((0., .2), 2e-3)
-    Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка конца релаксации
-
-    v0 = np.array([1000, 0])
-    a = striker.rotate
-    v0 = np.matmul([[np.cos(a), np.sin(a)],
-                    [-np.sin(a), np.cos(a)]], v0.T)
-    solver.solve((0, .05), 1e-4, v0, striker.name)
-    Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка конца моделирования
+    # solver.relax((0., 1.), 1e-3)
+    # Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка конца релаксации
+    #
+    # v0 = np.array([1000, 0])
+    # a = striker.rotate
+    # v0 = np.matmul([[np.cos(a), np.sin(a)],
+    #                 [-np.sin(a), np.cos(a)]], v0.T)
+    # solver.solve((0, 0.1), 2e-5, v0, striker.name)
+    # Visualizer(solver, win_size=(900, 900)).show_static()   # отрисовка конца моделирования
 
 
 def init_wall(load: bool) -> Body:
@@ -70,14 +70,14 @@ def init_wall(load: bool) -> Body:
 
     :return: Объект *стенки* типа ``Body``.
     """
-    w = Body(mass=15.5, size=(.35, 2.5), name='wall', color=(128, 128, 128), pos=np.array([.62, 0]))
+    w = Body(mass=5., size=(.1, .75), name='wall', color=(128, 128, 128), pos=np.array([.2, 0]))
 
     if load:
         path = 'data/start_wall'
         with open(path, 'rb') as f:
             w.particles = pickle.load(f)
     else:
-        w.break_into_particles(n=21, dim='w', kind='wall')
+        w.break_into_particles(n=31, dim='w', kind='wall')
         w.save_particles()
     print_n_particles(w)
 
@@ -89,14 +89,14 @@ def init_striker(load: bool) -> Body:
 
     :return: Объект *ударника* типа ``Body``.
     """
-    s = Body(mass=2.1, size=(.5, .075), name='striker', color=(0, 0, 0), pos=np.array([0.07, 0]), rotate_deg=30)
+    s = Body(mass=1., size=(.12, .012), name='striker', color=(0, 0, 0), pos=np.array([0.091, 0.]), rotate_deg=30)
 
     if load:
         path = 'data/start_striker'
         with open(path, 'rb') as f:
             s.particles = pickle.load(f)
     else:
-        s.break_into_particles(n=10, dim='h', kind='striker')
+        s.break_into_particles(n=15, dim='h', kind='striker')
         s.save_particles()
     print_n_particles(s)
 
@@ -105,7 +105,7 @@ def init_striker(load: bool) -> Body:
 
 def init_space() -> Space:
     """Инициализация физического пространства."""
-    return Space((3, 3))
+    return Space((1, 1))
 
 
 def print_n_particles(b: Body):

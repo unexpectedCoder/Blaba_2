@@ -8,7 +8,7 @@ from cell import Cell
 from solver import Solver
 
 
-L_BLUE = 220, 220, 255
+L_BLUE = 225, 225, 255
 WHITE = 255, 255, 255
 
 
@@ -47,10 +47,10 @@ class Visualizer:
             for cell in row:
                 rect = self.get_draw_rect(cell)
                 pygame.draw.rect(self.DISPLAYSURF, L_BLUE, rect, width=1)
-        for p in self.get_draw_particles(self.wall):
-            pygame.draw.circle(self.DISPLAYSURF, self.wall.color, (p[0], p[1]), 1)
-        for p in self.get_draw_particles(self.striker):
-            pygame.draw.circle(self.DISPLAYSURF, self.striker.color, (p[0], p[1]), 1)
+        for p, dp in zip(self.wall.particles, self.get_draw_particles(self.wall)):
+            pygame.draw.circle(self.DISPLAYSURF, p.color, (dp[0], dp[1]), 1.5)
+        for p, dp in zip(self.striker.particles, self.get_draw_particles(self.striker)):
+            pygame.draw.circle(self.DISPLAYSURF, p.color, (dp[0], dp[1]), 1.5)
 
     def get_draw_particles(self, b: Body) -> np.ndarray:
         """Преобразовать физические координаты частиц в экранные координаты.
@@ -59,6 +59,7 @@ class Visualizer:
         :return: Экранные координаты частиц тела *b*.
         """
         draw_parts = np.array([p.pos.copy() for p in b.particles], order='F')
+        draw_parts[:, 1] *= -1
         draw_parts[:, 1] += (self._win_size[1] // 2) / self._scale[1]   # центрирование на экране относительно оси Ox
         return draw_parts * self._scale
 
@@ -69,7 +70,8 @@ class Visualizer:
         :return: Кортеж параметров прямоугольника типа ``pygame.rect.Rect``.
         """
         size = cell.size * self._scale
-        ul = cell.ul.copy()
-        ul[1] += (self._win_size[1] // 2) / self._scale[1]
-        ul *= self._scale
-        return int(ul[0]), int(ul[1]), int(size[0]) + 1, int(size[1]) + 1
+        dl = cell.dl.copy()
+        dl[1] *= -1
+        dl[1] += (self._win_size[1] // 2) / self._scale[1]           # центрирование на экране относительно оси Ox
+        dl *= self._scale
+        return dl[0], dl[1], size[0], size[1]

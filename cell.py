@@ -9,34 +9,32 @@ class Cell:
 
     def __init__(self, size: Tuple[float, float], pos: Tuple[float, float]):
         self._size = np.array(size)
-        self._ul = np.array(pos)            # верхняя левая вершина
-        self._dr = self._ul + self._size    # нижняя правая вершина
+        self._dl = np.array(pos)            # верхняя левая вершина
+        self._ur = self.dl + self.size      # нижняя правая вершина
 
         self._parts = []                    # список частиц
 
     def __repr__(self):
         return f"{self.__class__.__name__}:" \
                f" size={self.size}" \
-               f" ul(pos)={self.ul}" \
-               f" dr={self.dr}" \
+               f" dl(pos)={self.dl}" \
+               f" ur={self.ur}" \
                f" n_particles={len(self.particles)}"
 
     def __contains__(self, p: Particle) -> bool:
-        return self.ul[0] <= p.pos[0] <= self.dr[0] and self.ul[1] <= p.pos[1] <= self.dr[1]
+        return self.dl[0] <= p.pos[0] < self.ur[0] and self.dl[1] <= p.pos[1] < self.ur[1]
 
     @property
     def size(self) -> np.ndarray:
         return self._size
 
     @property
-    def ul(self) -> np.ndarray:
-        """Upper-left вершина."""
-        return self._ul
+    def dl(self) -> np.ndarray:
+        return self._dl
 
     @property
-    def dr(self) -> np.ndarray:
-        """Down-right вершина."""
-        return self._dr
+    def ur(self) -> np.ndarray:
+        return self._ur
 
     @property
     def particles(self) -> List[Particle]:
