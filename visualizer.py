@@ -3,7 +3,7 @@ from pygame.locals import *
 import pygame
 import numpy as np
 
-from body import Body
+from space import Space
 from cell import Cell
 from solver import Solver
 
@@ -13,12 +13,10 @@ WHITE = 255, 255, 255
 
 
 class Visualizer:
-    def __init__(self, solver: Solver, win_size: Tuple[int, int] = (1200, 600)):
-        self.wall = solver.wall.copy()
-        self.striker = solver.striker.copy()
-        self.mesh = solver.mesh
+    def __init__(self, space: Space, solver: Solver, win_size: Tuple[int, int] = (1200, 600)):
+        self.cells = solver.cells.copy()
         self._win_size = win_size
-        self._scale = np.array([win_size[0] / solver.space.size[0], win_size[1] / solver.space.size[1]])
+        self._scale = np.array([win_size[0] / space.size[0], win_size[1] / space.size[1]])
 
         pygame.init()
         self.DISPLAYSURF = pygame.display.set_mode(win_size)
@@ -43,22 +41,24 @@ class Visualizer:
     def draw(self):
         """Метод рисования объектов на экране."""
         self.DISPLAYSURF.fill(WHITE)
-        for row in self.mesh.cells:
-            for cell in row:
-                rect = self.get_draw_rect(cell)
+
+        # Сетка
+        for row in self.cells:
+            for c in row:
+                rect = self.get_draw_rect(c)
                 pygame.draw.rect(self.DISPLAYSURF, L_BLUE, rect, width=1)
-        for p, dp in zip(self.wall.particles, self.get_draw_particles(self.wall)):
-            pygame.draw.circle(self.DISPLAYSURF, p.color, (dp[0], dp[1]), 1.5)
-        for p, dp in zip(self.striker.particles, self.get_draw_particles(self.striker)):
-            pygame.draw.circle(self.DISPLAYSURF, p.color, (dp[0], dp[1]), 1.5)
+        # Тела
+        parts = []
+        for row in self.cells:
+            for c in row:
+                parts += c.particles
+        if parts:
+            draw_parts = self.get_draw_particles(parts)
+            for p, dp in zip(parts, draw_parts):
+                pygame.draw.circle(self.DISPLAYSURF, p.color, (dp[0], dp[1]), 2)
 
-    def get_draw_particles(self, b: Body) -> np.ndarray:
-        """Преобразовать физические координаты частиц в экранные координаты.
-
-        :param b: тело, координаты частиц которого нужно преобразовать в экранные.
-        :return: Экранные координаты частиц тела *b*.
-        """
-        draw_parts = np.array([p.pos.copy() for p in b.particles], order='F')
+    def get_draw_particles(self, parts) -> np.ndarray:
+        draw_parts = np.array([p.pos for p in parts], order='F')
         draw_parts[:, 1] *= -1
         draw_parts[:, 1] += (self._win_size[1] // 2) / self._scale[1]   # центрирование на экране относительно оси Ox
         return draw_parts * self._scale

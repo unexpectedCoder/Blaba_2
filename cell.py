@@ -41,6 +41,9 @@ class Cell:
         """Массив принадлежащих частиц."""
         return self._parts
 
+    def clear(self):
+        self._parts = []
+
     def add_particles(self, parts: List[Particle]):
         """Добавить несколько частиц."""
         self._parts += parts.copy()

@@ -154,7 +154,7 @@ class Body:
 
         r = .5 * self.width / n if dim == 'w' else .5 * self.height / n     # радиус частицы
         dw, dh = 2 * r, r * np.sqrt(3.)                                     # шаг координат по ширине и высоте
-        nw, nh = int(self.width / dw), int(self.height / dh)                # кол-во частиц по ширине и высоте
+        nw, nh = int(self.width / dw) + 1, int(self.height / dh) + 1                # кол-во частиц по ширине и высоте
 
         positions = []
         y1 = lambda x: np.tan(np.deg2rad(15)) * (x - self.width) + .5 * self.height
