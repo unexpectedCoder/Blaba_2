@@ -25,8 +25,6 @@ class Solver:
         self.k2 = -24192 / 3211 * self.epsilon / self.rs ** 2
 
         self.cells = None
-        self.wall_parts = None
-        self.striker_parts = None
 
     def dU(self, dr: np.ndarray) -> np.ndarray:
         """Градиент потенциала Леннарда-Джонса."""
@@ -64,8 +62,8 @@ class Solver:
 
     def relax_wall(self, dt: float, t_span: Tuple[float, float]) -> Body:
         self._fill_mesh(self.wall.particles)
-        self._calc_euler(dt / 10)
-        t = t_span[0] + dt / 10
+        self._calc_euler(dt)
+        t = t_span[0] + dt
         while t < t_span[1] + dt:
             print(f"\t t = {t}")
             self._calc_verlet(dt)
@@ -82,8 +80,8 @@ class Solver:
 
     def relax_striker(self, dt: float, t_span: Tuple[float, float]) -> Body:
         self._fill_mesh(self.striker.particles)
-        self._calc_euler(dt / 1000)
-        t = t_span[0] + dt / 1000
+        self._calc_euler(dt)
+        t = t_span[0] + dt
         while t < t_span[1] + dt:
             print(f"\t t = {t}")
             self._calc_verlet(dt)
@@ -134,7 +132,7 @@ class Solver:
                     self._calc_force(tmp_cells, cell, i, j)
 
                     for p in cell.particles:
-                        p.velo += p.force / p.mass * dt
+                        p.velo += p.force * dt
                         p.pos += p.velo * dt
 
         self._update_mesh()
@@ -155,8 +153,9 @@ class Solver:
 
                     for p in cell.particles:
                         buf = p.pos.copy()
-                        p.pos = 2*p.pos - p.pos_prev + p.force / p.mass * dt**2
+                        p.pos = 2*p.pos - p.pos_prev + p.force * dt**2
                         p.velo = .5 * (p.pos - p.pos_prev) / dt
+
                         p.pos_prev = buf
 
         self._update_mesh()
@@ -205,13 +204,26 @@ class Solver:
                 self.cells[i+1][j-1].add_particle(p)
             elif p in self.cells[i+1][j]:
                 self.cells[i+1][j].add_particle(p)
-            else:
+            elif p in self.cells[i+1][j+1]:
                 self.cells[i+1][j+1].add_particle(p)
 
-    def solve(self, wall: Body, striker: Body):
+    def solve(self, wall: Body, striker: Body,
+              dt: float, t_span: Tuple[float, float], v0: np.ndarray):
+        self._set_v0(striker, v0)
+
         parts = wall.particles + striker.particles
         self._fill_mesh(parts)
-        # TODO Расчёт
+
+        self._calc_euler(dt)
+        t = t_span[0] + dt
+        while t < t_span[1] + dt:
+            print(f"\t t = {t}")
+            self._calc_verlet(dt)
+            t += dt
+
+    def _set_v0(self, b: Body, v0: np.ndarray):
+        for p in b.particles:
+            p.velo += v0
 
     def clear_mesh(self):
         if self.cells:

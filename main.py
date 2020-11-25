@@ -45,20 +45,22 @@ def modeling():
     # Основная часть моделирования
     # Начальное состояние
     solver = Solver(wall, striker, space,
-                    sigma=0.01, epsilon=1e-5)
+                    sigma=0.003, epsilon=1e-10)
     solver.gen_mesh()
     vis.show_in_static(solver)
-    # TODO Релаксация
+    # Релаксация
     # ...ударника
-    striker = solver.relax_striker(2e-4, (0, .05))
+    striker = solver.relax_striker(5e-4, (0, 1e-2))
     vis.show_in_static(solver)
     solver.clear_mesh()
     # ...стенки
-    wall = solver.relax_wall(5e-3, (0, .05))
+    wall = solver.relax_wall(1e-3, (0, 2.5e-2))
     vis.show_in_static(solver)
     solver.clear_mesh()
-    # TODO Основная симуляция
-    solver.solve(wall.copy(), striker.copy())
+    # Основная симуляция
+    a = striker.rotate
+    v0 = np.array([800. * np.cos(a), 800. * np.sin(a)])
+    solver.solve(wall.copy(), striker.copy(), 1e-6, (0, 0.2/800), v0)
     vis.show_in_static(solver)
 
 
@@ -67,8 +69,8 @@ def init_wall() -> Body:
 
     :return: Объект *стенки* типа ``Body``.
     """
-    w = Body(mass=5., size=(.12, .75), name='wall', color=(128, 128, 128), pos=np.array([.3, 0]))
-    w.break_into_particles(n=6, dim='w', kind='wall')
+    w = Body(mass=1.5, size=(.15, .75), name='wall', color=(128, 128, 128), pos=np.array([.3, 0]))
+    w.break_into_particles(n=35, dim='w', kind='wall')
     print_n_particles(w)
     return w
 
@@ -78,8 +80,8 @@ def init_striker() -> Body:
 
     :return: Объект *ударника* типа ``Body``.
     """
-    s = Body(mass=1., size=(.1, .02), name='striker', color=(0, 0, 0), pos=np.array([0.174, 0.]), rotate_deg=0)
-    s.break_into_particles(n=2, dim='h', kind='wall')
+    s = Body(mass=1., size=(.15, .025), name='striker', color=(0, 0, 0), pos=np.array([0.16, 0.]), rotate_deg=30)
+    s.break_into_particles(n=15, dim='h', kind='striker')
     print_n_particles(s)
     return s
 
